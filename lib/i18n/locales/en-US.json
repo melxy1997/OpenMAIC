@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS (Local)",
+    "providerEdgeTTS": "Microsoft Edge TTS (unofficial)",
+    "providerCosyVoiceTTS": "CosyVoice (self-hosted)",
     "providerBrowserNativeTTS": "Browser Native TTS",
     "voxcpmVoicesTitle": "VoxCPM Voices",
     "voxcpmVoicesDescription": "Saved in this browser and added to the shared Agent Bar voice pool.",

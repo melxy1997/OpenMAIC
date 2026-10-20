@@ -91,6 +91,8 @@ export type BuiltInTTSProviderId =
   | 'minimax-tts'
   | 'google-tts'
   | 'lemonade-tts'
+  | 'edge-tts'
+  | 'cosyvoice-tts'
   | 'browser-native-tts';
 
 export type TTSProviderId = BuiltInTTSProviderId | `custom-tts-${string}`;

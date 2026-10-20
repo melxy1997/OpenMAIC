@@ -119,6 +119,13 @@ import {
 import { ProviderQuotaExhaustedError } from '@/lib/server/provider-quota';
 import { appAttributionHeaders } from '@/lib/config/app-attribution';
 import { pcmS16leMonoToWav } from './pcm-wav';
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+
+const edgeTtsExecFile = promisify(execFile);
 
 const log = createLogger('TTSProviders');
 
@@ -210,10 +217,15 @@ export class TTSInvalidResponseError extends Error {
  */
 const DEFAULT_TTS_REQUEST_TIMEOUT_MS = 30_000;
 
-function ttsRequestTimeoutMs(): number {
-  const raw = process.env.TTS_REQUEST_TIMEOUT_MS?.trim();
+function ttsRequestTimeoutMs(providerId?: string): number {
+  const raw =
+    providerId === 'cosyvoice-tts'
+      ? process.env.COSYVOICE_TTS_REQUEST_TIMEOUT_MS?.trim() ||
+        process.env.TTS_REQUEST_TIMEOUT_MS?.trim()
+      : process.env.TTS_REQUEST_TIMEOUT_MS?.trim();
   const parsed = raw ? Number(raw) : NaN;
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TTS_REQUEST_TIMEOUT_MS;
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return providerId === 'cosyvoice-tts' ? 10 * 60 * 1000 : DEFAULT_TTS_REQUEST_TIMEOUT_MS;
 }
 
 /**
@@ -232,8 +244,8 @@ export class TTSRequestTimeoutError extends Error {
 }
 
 /** Combine the caller's cancel signal with the per-request timeout. */
-function ttsRequestSignal(callerSignal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(ttsRequestTimeoutMs());
+function ttsRequestSignal(callerSignal?: AbortSignal, providerId?: string): AbortSignal {
+  const timeout = AbortSignal.timeout(ttsRequestTimeoutMs(providerId));
   return callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
 }
 
@@ -302,7 +314,7 @@ export async function generateTTS(
     throw new Error(`API key required for TTS provider: ${config.providerId}`);
   }
 
-  const signal = ttsRequestSignal(config.signal);
+  const signal = ttsRequestSignal(config.signal, config.providerId);
   try {
     switch (config.providerId) {
       case 'openai-tts':
@@ -332,6 +344,12 @@ export async function generateTTS(
 
       case 'lemonade-tts':
         return await generateLemonadeTTS(config, text, signal);
+
+      case 'cosyvoice-tts':
+        return await generateCosyVoiceTTS(config, text, signal);
+
+      case 'edge-tts':
+        return await generateEdgeTTS(config, text, signal);
 
       case 'browser-native-tts':
         throw new Error(
@@ -442,6 +460,171 @@ async function generateLemonadeTTS(
   }
 
   return await validateTTSAudioResponse(response, 'Lemonade', config.format || 'wav');
+}
+
+async function generateCosyVoiceTTS(
+  config: TTSModelConfig,
+  text: string,
+  signal: AbortSignal,
+): Promise<TTSGenerationResult> {
+  const baseUrl = (config.baseUrl || TTS_PROVIDERS['cosyvoice-tts'].defaultBaseUrl || '').replace(
+    /\/$/,
+    '',
+  );
+  const options = config.providerOptions ?? {};
+  const mode =
+    typeof options.mode === 'string'
+      ? options.mode
+      : process.env.COSYVOICE_PROMPT_AUDIO
+        ? 'zero_shot'
+        : 'sft';
+  const validModes = new Set(['sft', 'zero_shot', 'cross_lingual', 'instruct', 'instruct2']);
+  if (!validModes.has(mode)) {
+    throw new Error(`Unsupported CosyVoice mode: ${mode}`);
+  }
+  const endpoint = `${baseUrl}/inference_${mode}`;
+  const form = new FormData();
+  form.append('tts_text', text);
+
+  const speaker = String(options.speaker ?? options.spkId ?? config.voice ?? '中文女');
+  // Must transcribe what the prompt wav actually says: zero-shot cloning
+  // aligns this text against the audio, so a mismatched placeholder garbles
+  // every synthesized clip instead of erroring out.
+  const promptText =
+    typeof options.promptText === 'string'
+      ? options.promptText
+      : process.env.COSYVOICE_PROMPT_TEXT ||
+        '这次模型可能继续要求查询行李规则，于是运行时再执行工具、再次回填结果、再次请求模型';
+  const instructText = typeof options.instructText === 'string' ? options.instructText : '';
+  const promptWavBase64 =
+    typeof options.promptWavBase64 === 'string' && options.promptWavBase64
+      ? options.promptWavBase64
+      : process.env.COSYVOICE_PROMPT_WAV_BASE64 ||
+        (process.env.COSYVOICE_PROMPT_AUDIO
+          ? (await readFile(process.env.COSYVOICE_PROMPT_AUDIO)).toString('base64')
+          : '');
+
+  if (mode === 'sft' || mode === 'instruct') form.append('spk_id', speaker);
+  if (mode === 'zero_shot') {
+    if (!promptText || !promptWavBase64) {
+      throw new Error(
+        'CosyVoice zero_shot requires providerOptions.promptText and promptWavBase64',
+      );
+    }
+    form.append('prompt_text', promptText);
+  }
+  if (mode === 'cross_lingual' && !promptWavBase64) {
+    throw new Error('CosyVoice cross_lingual requires providerOptions.promptWavBase64');
+  }
+  if (mode === 'instruct' || mode === 'instruct2') {
+    if (!instructText) throw new Error(`CosyVoice ${mode} requires providerOptions.instructText`);
+    form.append('instruct_text', instructText);
+  }
+  if (mode === 'zero_shot' || mode === 'cross_lingual' || mode === 'instruct2') {
+    const bytes = decodeBase64Audio(promptWavBase64);
+    const promptBuffer = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength,
+    ) as ArrayBuffer;
+    form.append('prompt_wav', new Blob([promptBuffer], { type: 'audio/wav' }), 'prompt.wav');
+  }
+
+  const response = await ttsFetch(config, endpoint, { method: 'POST', body: form, signal });
+  if (!response.ok) {
+    throwIfTtsRateLimited('CosyVoice', response.status, response.headers?.get('retry-after'));
+    throw new Error(`CosyVoice API error: ${await readTTSApiError(response)}`);
+  }
+  const pcm = new Uint8Array(await response.arrayBuffer());
+  if (!pcm.byteLength)
+    throw new TTSInvalidResponseError('CosyVoice', 'CosyVoice returned no audio');
+  const contentType = response.headers.get('content-type')?.toLowerCase() || '';
+  if (
+    contentType.includes('json') ||
+    contentType.includes('text') ||
+    contentType.includes('html')
+  ) {
+    throw new TTSInvalidResponseError(
+      'CosyVoice',
+      'CosyVoice returned an error payload instead of PCM audio',
+    );
+  }
+  return { audio: pcmS16leMonoToWav(pcm, 22_050), format: 'wav' };
+}
+
+function decodeBase64Audio(value: string): Uint8Array {
+  const encoded = value.replace(/^data:[^,]+,/, '').trim();
+  if (!encoded) throw new Error('CosyVoice promptWavBase64 is empty');
+  try {
+    return new Uint8Array(Buffer.from(encoded, 'base64'));
+  } catch {
+    throw new Error('CosyVoice promptWavBase64 is not valid base64');
+  }
+}
+
+const EDGE_TTS_COMMAND = process.env.EDGE_TTS_COMMAND?.trim() || 'edge-tts';
+
+function edgeTtsRate(speed: number | undefined): string {
+  const percent = Math.round(((speed ?? 1) - 1) * 100);
+  return `${percent >= 0 ? '+' : ''}${percent}%`;
+}
+
+function edgeTtsFailureDetail(error: unknown): string {
+  const stderr =
+    error && typeof error === 'object' && 'stderr' in error && typeof error.stderr === 'string'
+      ? error.stderr
+      : '';
+  if (/\b403\b/.test(stderr)) return 'Microsoft Edge Read Aloud rejected this server (HTTP 403)';
+  if (/ENOENT/.test(error instanceof Error ? error.message : ''))
+    return 'edge-tts CLI was not found';
+  return 'the edge-tts CLI could not complete synthesis';
+}
+
+/**
+ * Microsoft Edge Read Aloud synthesis via the maintained edge-tts CLI. The CLI
+ * tracks Edge's changing, undocumented authentication protocol; no endpoint or
+ * executable can be supplied by requests.
+ */
+async function generateEdgeTTS(
+  config: TTSModelConfig,
+  text: string,
+  signal: AbortSignal,
+): Promise<TTSGenerationResult> {
+  const provider = TTS_PROVIDERS['edge-tts'];
+  const voice = config.voice || DEFAULT_TTS_VOICES['edge-tts'];
+  if (!provider.voices.some((entry) => entry.id === voice)) {
+    throw new Error(`Unsupported Microsoft Edge TTS voice: ${voice}`);
+  }
+
+  const directory = await mkdtemp(join(tmpdir(), 'openmaic-edge-tts-'));
+  const output = join(directory, 'speech.mp3');
+  try {
+    await edgeTtsExecFile(
+      EDGE_TTS_COMMAND,
+      [
+        '--voice',
+        voice,
+        '--rate',
+        edgeTtsRate(config.speed),
+        '--text',
+        text,
+        '--write-media',
+        output,
+      ],
+      { signal, maxBuffer: 1024 * 1024 },
+    );
+    const audio = new Uint8Array(await readFile(output));
+    if (!audio.byteLength) {
+      throw new TTSInvalidResponseError('Microsoft Edge', 'Microsoft Edge TTS returned no audio');
+    }
+    return { audio, format: 'mp3' };
+  } catch (error) {
+    if (config.signal?.aborted) throw error;
+    throw new Error(
+      `Microsoft Edge TTS failed: ${edgeTtsFailureDetail(error)}. Confirm edge-tts is installed and this network can reach Microsoft Edge Read Aloud.`,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 }
 
 /**

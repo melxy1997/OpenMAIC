@@ -1405,6 +1405,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS（本機）",
+    "providerEdgeTTS": "Microsoft Edge TTS（非官方服務）",
+    "providerCosyVoiceTTS": "CosyVoice（自部署）",
     "providerBrowserNativeTTS": "瀏覽器原生 TTS",
     "voxcpmVoicesTitle": "VoxCPM 聲音",
     "voxcpmVoicesDescription": "儲存在目前瀏覽器，進入統一音色池後可在 AI 代理聲音列中使用。",

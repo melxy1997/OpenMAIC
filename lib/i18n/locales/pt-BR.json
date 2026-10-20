@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS (Local)",
+    "providerEdgeTTS": "Microsoft Edge TTS (não oficial)",
+    "providerCosyVoiceTTS": "CosyVoice (auto-hospedado)",
     "providerBrowserNativeTTS": "TTS Nativo do Navegador",
     "voxcpmVoicesTitle": "Vozes VoxCPM",
     "voxcpmVoicesDescription": "Salvas neste navegador e adicionadas ao conjunto de vozes da Barra de Agentes.",

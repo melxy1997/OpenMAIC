@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS (Локальный)",
+    "providerEdgeTTS": "Microsoft Edge TTS (неофициальный)",
+    "providerCosyVoiceTTS": "CosyVoice (самостоятельный хостинг)",
     "providerBrowserNativeTTS": "Встроенный TTS браузера",
     "voxcpmVoicesTitle": "Голоса VoxCPM",
     "voxcpmVoicesDescription": "Сохраняются в этом браузере и добавляются в общий пул голосов Agent Bar.",

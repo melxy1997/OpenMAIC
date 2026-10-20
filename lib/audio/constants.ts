@@ -1179,6 +1179,63 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
     supportsSpeed: false,
   },
 
+  'edge-tts': {
+    id: 'edge-tts',
+    name: 'Microsoft Edge TTS',
+    requiresApiKey: false,
+    icon: '/logos/edge.svg',
+    models: [],
+    defaultModelId: '',
+    voices: [
+      {
+        id: 'zh-CN-XiaoxiaoNeural',
+        name: '晓晓',
+        language: 'zh-CN',
+        localeName: '中文（简体，中国）',
+        gender: 'female',
+      },
+      {
+        id: 'zh-CN-YunxiNeural',
+        name: '云希',
+        language: 'zh-CN',
+        localeName: '中文（简体，中国）',
+        gender: 'male',
+      },
+      {
+        id: 'en-US-JennyNeural',
+        name: 'Jenny',
+        language: 'en-US',
+        gender: 'female',
+      },
+      {
+        id: 'en-US-GuyNeural',
+        name: 'Guy',
+        language: 'en-US',
+        gender: 'male',
+      },
+    ],
+    supportedFormats: ['mp3'],
+    speedRange: { min: 0.5, max: 2.0, default: 1.0 },
+  },
+
+  'cosyvoice-tts': {
+    id: 'cosyvoice-tts',
+    name: 'CosyVoice (自部署)',
+    requiresApiKey: false,
+    defaultBaseUrl: 'http://127.0.0.1:50000',
+    icon: '/logos/cosyvoice.svg',
+    models: [{ id: 'CosyVoice2-0.5B', name: 'CosyVoice2 0.5B' }],
+    defaultModelId: 'CosyVoice2-0.5B',
+    voices: [
+      { id: '中文女', name: '中文女', language: 'zh-CN', gender: 'female' },
+      { id: '中文男', name: '中文男', language: 'zh-CN', gender: 'male' },
+      { id: '英文女', name: '英文女', language: 'en-US', gender: 'female' },
+      { id: '英文男', name: '英文男', language: 'en-US', gender: 'male' },
+    ],
+    supportedFormats: ['wav'],
+    supportsSpeed: false,
+  },
+
   'browser-native-tts': {
     id: 'browser-native-tts',
     name: '浏览器原生 (Web Speech API)',
@@ -1551,6 +1608,8 @@ export const DEFAULT_TTS_VOICES: Record<BuiltInTTSProviderId, string> = {
   'minimax-tts': 'female-yujie',
   'google-tts': 'Kore',
   'lemonade-tts': 'af_heart',
+  'edge-tts': 'zh-CN-XiaoxiaoNeural',
+  'cosyvoice-tts': 'openmaic-default',
   'browser-native-tts': 'default',
 };
 
@@ -1565,6 +1624,8 @@ export const DEFAULT_TTS_MODELS: Record<BuiltInTTSProviderId, string> = {
   'minimax-tts': 'speech-2.8-hd',
   'google-tts': 'gemini-3.1-flash-tts-preview',
   'lemonade-tts': 'kokoro-v1',
+  'edge-tts': '',
+  'cosyvoice-tts': 'CosyVoice2-0.5B',
   'browser-native-tts': '',
 };
 

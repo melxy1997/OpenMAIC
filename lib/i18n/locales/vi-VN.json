@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS (Cục bộ)",
+    "providerEdgeTTS": "Microsoft Edge TTS (không chính thức)",
+    "providerCosyVoiceTTS": "CosyVoice (tự lưu trữ)",
     "providerBrowserNativeTTS": "Giọng đọc sẵn có của trình duyệt",
     "voxcpmVoicesTitle": "Giọng VoxCPM",
     "voxcpmVoicesDescription": "Lưu trong trình duyệt này và được thêm vào kho giọng dùng chung ở thanh tác nhân.",

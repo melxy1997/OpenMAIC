@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS（本地）",
+    "providerEdgeTTS": "Microsoft Edge TTS（非官方服务）",
+    "providerCosyVoiceTTS": "CosyVoice（自部署）",
     "providerBrowserNativeTTS": "浏览器原生 TTS",
     "voxcpmVoicesTitle": "VoxCPM 音色",
     "voxcpmVoicesDescription": "保存在当前浏览器，进入统一音色池后可在 Agent Bar 中使用。",

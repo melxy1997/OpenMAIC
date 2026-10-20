@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS（ローカル）",
+    "providerEdgeTTS": "Microsoft Edge TTS（非公式）",
+    "providerCosyVoiceTTS": "CosyVoice（セルフホスト）",
     "providerBrowserNativeTTS": "ブラウザネイティブTTS",
     "voxcpmVoicesTitle": "VoxCPM 音色",
     "voxcpmVoicesDescription": "このブラウザに保存され、Agent Bar の共通音色プールに追加されます。",

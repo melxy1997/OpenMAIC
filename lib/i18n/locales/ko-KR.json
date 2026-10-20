@@ -1420,6 +1420,8 @@
     "providerMiniMaxTTS": "MiniMax TTS",
     "providerGoogleTTS": "Google Gemini TTS",
     "providerLemonadeTTS": "Lemonade TTS (로컬)",
+    "providerEdgeTTS": "Microsoft Edge TTS (비공식)",
+    "providerCosyVoiceTTS": "CosyVoice (자체 호스팅)",
     "providerBrowserNativeTTS": "브라우저 기본 TTS",
     "voxcpmVoicesTitle": "VoxCPM 음성",
     "voxcpmVoicesDescription": "이 브라우저에 저장되어 공유 에이전트 바 음성 풀에 추가됩니다.",

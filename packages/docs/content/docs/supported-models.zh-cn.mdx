@@ -31,7 +31,7 @@ description: 开源版 OpenMAIC 的内置模型与 provider 列表。
 | 能力 | 预设 |
 | --- | --- |
 | 对话 | `openai`、`azure`、`atlascloud`、`anthropic`、`bedrock`、`google`、`glm`、`qwen`、`deepseek`、`kimi`、`siliconflow`、`doubao`、`openrouter`、`grok`、`tencent-hunyuan`、`xiaomi`、`ollama`、`lemonade`、`openai-compatible`，以及各 Token Plan |
-| TTS | `openai-tts`、`azure-tts`、`glm-tts`、`qwen-tts`、`minimax-tts`、`voxcpm-tts`、`doubao-tts`、`elevenlabs-tts`、`google-tts`、`browser-native-tts`、`lemonade-tts` |
+| TTS | `openai-tts`、`azure-tts`、`glm-tts`、`qwen-tts`、`minimax-tts`、`voxcpm-tts`、`cosyvoice-tts`、`doubao-tts`、`elevenlabs-tts`、`google-tts`、`edge-tts`、`browser-native-tts`、`lemonade-tts` |
 | ASR | `openai-whisper`、`qwen-asr`、`azure-asr`、`browser-native`、`funasr-asr`、`lemonade-asr` |
 | 图像 | `seedream`、`openai-image`、`qwen-image`、`nano-banana`、`minimax-image`、`grok-image`、`comfyui-image`、`lemonade-image`、`openrouter-image` |
 | 视频 | `seedance`、`kling`、`minimax-video`、`grok-video`、`happyhorse`、`openrouter-video` |
@@ -106,10 +106,12 @@ description: 开源版 OpenMAIC 的内置模型与 provider 列表。
 | Qwen TTS       | `qwen-tts`           | Qwen3 TTS Flash (`qwen3-tts-flash`)<br />Qwen3 TTS Voice Clone (`qwen3-tts-vc-2026-01-22`)<br />Voice Clone is a legacy grouping ID for saved voices; the retired model cannot register or synthesize cloned voices. |
 | MiniMax TTS    | `minimax-tts`        | Speech 2.8 HD (`speech-2.8-hd`)<br />Speech 2.8 Turbo (`speech-2.8-turbo`)<br />Speech 2.6 HD (`speech-2.6-hd`)<br />Speech 2.6 Turbo (`speech-2.6-turbo`)<br />Speech 02 HD (`speech-02-hd`)<br />Speech 02 Turbo (`speech-02-turbo`) |
 | VoxCPM2        | `voxcpm-tts`         | VoxCPM2 (`voxcpm2`)<br />后端：vLLM-Omni、Python API、Nano-vLLM                                                                                                                                                                        |
+| CosyVoice2     | `cosyvoice-tts`      | CosyVoice2 0.5B；官方 FastAPI 自部署，返回裸 PCM，由 OpenMAIC 封装为 WAV。                                                                                                                        |
 | Lemonade TTS   | `lemonade-tts`       | Kokoro v1 (`kokoro-v1`)                                                                                                                                                                                                                |
 | 豆包 TTS 2.0   | `doubao-tts`         | 无模型选择器，使用豆包 TTS 2.0 音色 ID。                                                                                                                                                                                               |
 | ElevenLabs TTS | `elevenlabs-tts`     | Multilingual v2 (`eleven_multilingual_v2`)<br />Flash v2.5 (`eleven_flash_v2_5`)<br />Flash v2 (`eleven_flash_v2`)                                                                                                                     |
 | Google Gemini TTS | `google-tts`         | Gemini 3.1 Flash TTS Preview (`gemini-3.1-flash-tts-preview`)<br />Gemini 2.5 Flash Preview TTS (`gemini-2.5-flash-preview-tts`)<br />Gemini 2.5 Pro Preview TTS (`gemini-2.5-pro-preview-tts`)                                        |
+| Microsoft Edge TTS | `edge-tts`         | 无模型选择器；使用 Edge Read Aloud 的在线音色。无需 Key，但这是非官方服务，可能受网络、限流或上游协议变化影响。 |
 | 浏览器原生 TTS | `browser-native-tts` | 无模型选择器，使用浏览器和操作系统提供的音色列表。                                                                                                                                                                                     |
 
 ## ASR 模型
