@@ -112,7 +112,7 @@ describe.skipIf(!contractUrl)('concurrent schema bootstrap (PostgreSQL)', () => 
         const versions = await check.query(
           `SELECT version FROM openmaic_schema_migrations WHERE store = 'stage-meta' ORDER BY version`,
         );
-        expect(versions.rows).toEqual([{ version: 1 }, { version: 2 }]);
+        expect(versions.rows).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }]);
         expect((await storeFor(check, ALICE).listDocuments()).map((row) => row.id)).toEqual([
           'legacy',
         ]);
