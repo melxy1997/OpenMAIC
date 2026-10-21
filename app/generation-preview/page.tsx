@@ -190,7 +190,9 @@ function GenerationPreviewContent() {
     seriesNoticeShownRef.current = true;
     void fetchCourseSeries(view.series.seriesId).then((series) => {
       if (!series) return;
-      toast.info(t('classroom.seriesSplitNotice', { order: view.series!.order, total: series.partCount }));
+      toast.info(
+        t('classroom.seriesSplitNotice', { order: view.series!.order, total: series.partCount }),
+      );
     });
   }, [view?.series, t]);
 

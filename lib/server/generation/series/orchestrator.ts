@@ -24,7 +24,10 @@ import {
   type PendingSeriesPart,
 } from '@/lib/persistence/course-series';
 import { withSchemaBootstrapLock } from '@/lib/persistence/schema-bootstrap-lock';
-import { getServerPersistenceProvider, type ServerPersistenceProvider } from '@/lib/persistence/server-provider';
+import {
+  getServerPersistenceProvider,
+  type ServerPersistenceProvider,
+} from '@/lib/persistence/server-provider';
 import {
   ActiveRunLimitError,
   createGenerationRun,
@@ -241,6 +244,10 @@ export async function resumeStalledCourseSeries(
 }
 
 /** A series' course gets a readable, numbered title ("Requirement — Part 2 of 5"). */
-export function seriesPartCourseTitle(seriesTitle: string, order: number, partCount: number): string {
+export function seriesPartCourseTitle(
+  seriesTitle: string,
+  order: number,
+  partCount: number,
+): string {
   return `${seriesTitle} — Part ${order} of ${partCount}`;
 }

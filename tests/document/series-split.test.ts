@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { ParsedDocumentPart } from '@/lib/document/bundle';
 import { materialNeedsSeriesSplit, splitMaterialIntoSeries } from '@/lib/document/series-split';
 
-function part(order: number, text: string, overrides: Partial<ParsedDocumentPart> = {}): ParsedDocumentPart {
+function part(
+  order: number,
+  text: string,
+  overrides: Partial<ParsedDocumentPart> = {},
+): ParsedDocumentPart {
   return {
     source: {
       id: `source-${order}`,
@@ -70,7 +74,9 @@ describe('splitMaterialIntoSeries', () => {
     // No character is lost: concatenating every kept slice's text recovers
     // the same total length the input started with (slices only ever drop
     // trailing whitespace at a word boundary, not characters from the middle).
-    const recoveredChars = series.flatMap((s) => s.parts).reduce((sum, p) => sum + p.text.length, 0);
+    const recoveredChars = series
+      .flatMap((s) => s.parts)
+      .reduce((sum, p) => sum + p.text.length, 0);
     expect(recoveredChars).toBeGreaterThan(0);
     expect(recoveredChars).toBeLessThanOrEqual(totalChars);
     expect(recoveredChars).toBeGreaterThan(totalChars - parts.length * 2); // only boundary trims lost
@@ -130,10 +136,7 @@ describe('splitMaterialIntoSeries', () => {
 
   it('renumbers source.order within each series part starting at 0', () => {
     const budget = 50;
-    const parts = [
-      part(5, repeatWords('a', 10)),
-      part(9, repeatWords('b', 10)),
-    ];
+    const parts = [part(5, repeatWords('a', 10)), part(9, repeatWords('b', 10))];
     const series = splitMaterialIntoSeries(parts, budget);
 
     for (const seriesPart of series) {

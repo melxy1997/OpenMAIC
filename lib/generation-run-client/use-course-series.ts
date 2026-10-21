@@ -34,7 +34,7 @@ function load(seriesId: string): Promise<number | null> {
 
 /** The series' total part count, once loaded; null while loading or on a failed/missing series. */
 export function useCourseSeriesPartCount(seriesId: string | null): number | null {
-  const cached = seriesId ? cache.get(seriesId) ?? null : null;
+  const cached = seriesId ? (cache.get(seriesId) ?? null) : null;
   const [loaded, setLoaded] = useState<{ seriesId: string | null; partCount: number | null }>({
     seriesId,
     partCount: cached,

@@ -273,99 +273,95 @@ describe.skipIf(!contractUrl)('course series on PostgreSQL', () => {
     throw new Error(`run ${runId} did not reach a final state within the step budget`);
   }
 
-  it(
-    'promotes a run to series part 1 and auto-starts part 2 once part 1 completes',
-    async () => {
-      // Part 1's own run never knows it is one until material-analysis: it
-      // starts as an ordinary run, with no seriesContext.
-      const run = await start(runInput());
-      expect(run.series).toBeNull();
+  it('promotes a run to series part 1 and auto-starts part 2 once part 1 completes', async () => {
+    // Part 1's own run never knows it is one until material-analysis: it
+    // starts as an ordinary run, with no seriesContext.
+    const run = await start(runInput());
+    expect(run.series).toBeNull();
 
-      const since = new Date();
-      const { services: part1Services, analyzed } = fakeServices(twoPartPlan());
-      const completedPart1 = await driveToCompletion(run.id, part1Services);
+    const since = new Date();
+    const { services: part1Services, analyzed } = fakeServices(twoPartPlan());
+    const completedPart1 = await driveToCompletion(run.id, part1Services);
 
-      // The material-analysis step saw the first part's own slice, not the
-      // whole material: the split took effect on this very run.
-      expect(analyzed).toHaveLength(1);
-      expect(analyzed[0]!.textRanges).toEqual({ [MATERIAL_ID]: { start: 0, end: 500 } });
+    // The material-analysis step saw the first part's own slice, not the
+    // whole material: the split took effect on this very run.
+    expect(analyzed).toHaveLength(1);
+    expect(analyzed[0]!.textRanges).toEqual({ [MATERIAL_ID]: { start: 0, end: 500 } });
 
-      expect(completedPart1.state).toBe('completed');
-      expect(completedPart1.series).toEqual({ seriesId: expect.any(String), order: 1 });
-      const seriesId = completedPart1.series!.seriesId;
+    expect(completedPart1.state).toBe('completed');
+    expect(completedPart1.series).toEqual({ seriesId: expect.any(String), order: 1 });
+    const seriesId = completedPart1.series!.seriesId;
 
-      const series = await getCourseSeries(pool, seriesId, OWNER);
-      expect(series).not.toBeNull();
-      expect(series!.partCount).toBe(2);
-      expect(series!.materialIds).toEqual([MATERIAL_ID]);
+    const series = await getCourseSeries(pool, seriesId, OWNER);
+    expect(series).not.toBeNull();
+    expect(series!.partCount).toBe(2);
+    expect(series!.materialIds).toEqual([MATERIAL_ID]);
 
-      // Part 2 is started by the engine's own completion path, not by this
-      // test: it only shows up once `complete()`'s fire-and-forget call to
-      // `startNextSeriesPart` lands.
-      let part2: StoredRun | undefined;
-      await vi.waitFor(async () => {
-        const updated = await listGenerationRunsUpdatedSince(OWNER, since);
-        part2 = updated.find((candidate) => candidate.series?.order === 2);
-        expect(part2).toBeDefined();
-      }, UNTIL);
+    // Part 2 is started by the engine's own completion path, not by this
+    // test: it only shows up once `complete()`'s fire-and-forget call to
+    // `startNextSeriesPart` lands.
+    let part2: StoredRun | undefined;
+    await vi.waitFor(async () => {
+      const updated = await listGenerationRunsUpdatedSince(OWNER, since);
+      part2 = updated.find((candidate) => candidate.series?.order === 2);
+      expect(part2).toBeDefined();
+    }, UNTIL);
 
-      expect(part2!.series).toEqual({ seriesId, order: 2 });
-      expect(part2!.input.materialIds).toEqual([MATERIAL_ID]);
-      expect(part2!.input.seriesContext).toEqual({
-        seriesId,
-        order: 2,
-        textRanges: { [MATERIAL_ID]: { start: 500, end: 1000 } },
-      });
-      // Every later part is confirmed on its own: nobody is shown its outline.
-      expect(part2!.input.outlineReview).toBe('auto');
+    expect(part2!.series).toEqual({ seriesId, order: 2 });
+    expect(part2!.input.materialIds).toEqual([MATERIAL_ID]);
+    expect(part2!.input.seriesContext).toEqual({
+      seriesId,
+      order: 2,
+      textRanges: { [MATERIAL_ID]: { start: 500, end: 1000 } },
+    });
+    // Every later part is confirmed on its own: nobody is shown its outline.
+    expect(part2!.input.outlineReview).toBe('auto');
 
-      // The read route carries the series-wide count once only a part's
-      // `seriesId` is known. At this deterministic point part 2 has already
-      // been claimed, so no planned part remains pending.
-      const seriesRoute = await import('@/app/api/course-series/[id]/route');
-      const seriesRead = await seriesRoute.GET(
-        new NextRequest(`http://localhost/api/course-series/${seriesId}`, {
-          headers: cookie(OWNER_COOKIE),
-        }),
-        { params: Promise.resolve({ id: seriesId }) },
-      );
-      expect((await seriesRead.json()).series).toMatchObject({
-        id: seriesId,
-        partCount: 2,
-        pendingPartCount: 0,
-      });
+    // The read route carries the series-wide count once only a part's
+    // `seriesId` is known. At this deterministic point part 2 has already
+    // been claimed, so no planned part remains pending.
+    const seriesRoute = await import('@/app/api/course-series/[id]/route');
+    const seriesRead = await seriesRoute.GET(
+      new NextRequest(`http://localhost/api/course-series/${seriesId}`, {
+        headers: cookie(OWNER_COOKIE),
+      }),
+      { params: Promise.resolve({ id: seriesId }) },
+    );
+    expect((await seriesRead.json()).series).toMatchObject({
+      id: seriesId,
+      partCount: 2,
+      pendingPartCount: 0,
+    });
 
-      // Part 2's own material-analysis never asks for another split: a
-      // series part reads only its own slice, so `planMaterialSeries` would
-      // not even be consulted in a real run; this fake simply never answers
-      // one for it (`null`), the same guard the engine itself applies.
-      const { services: part2Services, analyzed: analyzedPart2 } = fakeServices(null);
-      const completedPart2 = await driveToCompletion(part2!.id, part2Services);
-      expect(completedPart2.state).toBe('completed');
-      expect(analyzedPart2[0]!.textRanges).toEqual({ [MATERIAL_ID]: { start: 500, end: 1000 } });
+    // Part 2's own material-analysis never asks for another split: a
+    // series part reads only its own slice, so `planMaterialSeries` would
+    // not even be consulted in a real run; this fake simply never answers
+    // one for it (`null`), the same guard the engine itself applies.
+    const { services: part2Services, analyzed: analyzedPart2 } = fakeServices(null);
+    const completedPart2 = await driveToCompletion(part2!.id, part2Services);
+    expect(completedPart2.state).toBe('completed');
+    expect(analyzedPart2[0]!.textRanges).toEqual({ [MATERIAL_ID]: { start: 500, end: 1000 } });
 
-      // No part 3: the series had exactly two parts, so completing the last
-      // one must not spin up another run. `startNextSeriesPart` for part 2
-      // is fire-and-forget too, but `restParts` is empty by now, so it
-      // resolves to null synchronously with no run created; a short
-      // negative wait covers the (unlikely) case it is still in flight.
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      const stillActive = await listGenerationRunsUpdatedSince(OWNER, since);
-      expect(stillActive.find((candidate) => candidate.series?.order === 3)).toBeUndefined();
+    // No part 3: the series had exactly two parts, so completing the last
+    // one must not spin up another run. `startNextSeriesPart` for part 2
+    // is fire-and-forget too, but `restParts` is empty by now, so it
+    // resolves to null synchronously with no run created; a short
+    // negative wait covers the (unlikely) case it is still in flight.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const stillActive = await listGenerationRunsUpdatedSince(OWNER, since);
+    expect(stillActive.find((candidate) => candidate.series?.order === 3)).toBeUndefined();
 
-      const seriesReadAfter = await seriesRoute.GET(
-        new NextRequest(`http://localhost/api/course-series/${seriesId}`, {
-          headers: cookie(OWNER_COOKIE),
-        }),
-        { params: Promise.resolve({ id: seriesId }) },
-      );
-      expect((await seriesReadAfter.json()).series).toMatchObject({ pendingPartCount: 0 });
+    const seriesReadAfter = await seriesRoute.GET(
+      new NextRequest(`http://localhost/api/course-series/${seriesId}`, {
+        headers: cookie(OWNER_COOKIE),
+      }),
+      { params: Promise.resolve({ id: seriesId }) },
+    );
+    expect((await seriesReadAfter.json()).series).toMatchObject({ pendingPartCount: 0 });
 
-      const seriesAfter = await getCourseSeries(pool, seriesId, OWNER);
-      expect(seriesAfter!.pendingParts).toEqual([]);
-    },
-    30_000,
-  );
+    const seriesAfter = await getCourseSeries(pool, seriesId, OWNER);
+    expect(seriesAfter!.pendingParts).toEqual([]);
+  }, 30_000);
 
   it('leaves an ordinary run with no series membership', async () => {
     const run = await start(runInput({ requirement: 'Teach a short topic' }));
@@ -475,16 +471,20 @@ describe.skipIf(!contractUrl)('course series on PostgreSQL', () => {
       [seriesId],
     );
     expect(runsAfterRetry.rows.map((row) => row.series_order)).toEqual([1, 2]);
-    expect((await getCourseSeries(pool, seriesId, owner))!.pendingParts.map((part) => part.order)).toEqual([
-      3,
-    ]);
+    expect(
+      (await getCourseSeries(pool, seriesId, owner))!.pendingParts.map((part) => part.order),
+    ).toEqual([3]);
   });
 
   it('keeps a stalled part pending at the owner limit and starts it after capacity returns', async () => {
     const owner = `${OWNER}:capacity`;
     const input = runInput();
     const predecessor = await createGenerationRun(owner, input, CONTINUATION_LIMITS);
-    const blocker = await createGenerationRun(owner, runInput({ materialIds: [] }), CONTINUATION_LIMITS);
+    const blocker = await createGenerationRun(
+      owner,
+      runInput({ materialIds: [] }),
+      CONTINUATION_LIMITS,
+    );
     const { seriesId } = await startCourseSeries({
       ownerId: owner,
       title: 'Capacity series',
@@ -510,7 +510,7 @@ describe.skipIf(!contractUrl)('course series on PostgreSQL', () => {
     expect((await getCourseSeries(pool, seriesId, owner))!.pendingParts).toEqual([]);
   });
 
-  it('answers 404 for an unknown series id, and for another owner\'s series', async () => {
+  it("answers 404 for an unknown series id, and for another owner's series", async () => {
     const run = await start(runInput());
     const { services } = fakeServices(twoPartPlan());
     const completed = await driveToCompletion(run.id, services);
