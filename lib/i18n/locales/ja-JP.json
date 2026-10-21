@@ -1129,7 +1129,7 @@
     "requirementPlaceholder": "学びたいことを自由に入力してください。例えば：\n「Pythonをゼロから30分で教えて」\n「フーリエ変換をホワイトボードで解説して」\n「ボードゲーム『アバロン』の遊び方」",
     "requirementRequired": "コースの要件を入力してください",
     "fileTooLarge": "ファイルが大きすぎます。50MB以下のファイルを選択してください",
-    "courseMaterialCountLimit": "教材ファイルは最大5件までアップロードできます",
+    "courseMaterialCountLimit": "教材ファイルは最大{{n}}件までアップロードできます",
     "courseMaterialTotalSizeLimit": "教材の合計サイズは150MB未満にしてください",
     "unsupportedCourseMaterial": "{{parser}} はこのファイル形式に対応していません。対応形式：{{formats}}",
     "unsupportedMaterialFormat": "現在の解析器はこの形式に対応していません。解析器を切り替えるか、別のファイルを選択してください。",

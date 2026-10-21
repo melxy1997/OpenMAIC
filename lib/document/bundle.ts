@@ -1,7 +1,7 @@
 import { MAX_PDF_CONTENT_CHARS, MAX_VISION_IMAGES } from '@/lib/constants/generation';
 import type { DocumentSource, PdfImage } from '@/lib/types/generation';
 
-export const MAX_DOCUMENT_BUNDLE_FILES = 5;
+export const MAX_DOCUMENT_BUNDLE_FILES = 20;
 export const MAX_DOCUMENT_BUNDLE_TOTAL_SIZE_BYTES = 150 * 1024 * 1024;
 
 const BASE_BUDGET_PER_DOCUMENT = 1500;

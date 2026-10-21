@@ -1129,7 +1129,7 @@
     "requirementPlaceholder": "输入你想学的任何内容，例如：\n「从零学 Python，30 分钟写出第一个程序」\n「用白板给我讲解傅里叶变换」\n「阿瓦隆桌游怎么玩」",
     "requirementRequired": "请输入课程需求",
     "fileTooLarge": "文件过大，请选择小于 50MB 的文件",
-    "courseMaterialCountLimit": "最多可上传 5 个课程材料文件",
+    "courseMaterialCountLimit": "最多可上传 {{n}} 个课程材料文件",
     "courseMaterialTotalSizeLimit": "课程材料总大小需小于 150MB",
     "unsupportedCourseMaterial": "{{parser}} 不支持该文件类型，当前支持：{{formats}}",
     "unsupportedMaterialFormat": "当前解析器不支持该格式，请切换解析器或选择其他文件",

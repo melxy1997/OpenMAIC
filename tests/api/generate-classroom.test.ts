@@ -348,7 +348,13 @@ describe('POST /api/generate-classroom', () => {
     ['a string', 'mat_mmmmmmmmmmmmmmmmmmmmmmmmm1'],
     ['a non-string entry', ['mat_mmmmmmmmmmmmmmmmmmmmmmmmm1', 7]],
     ['an empty entry', ['mat_mmmmmmmmmmmmmmmmmmmmmmmmm1', '  ']],
-    ['too many ids', ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => `mat_${'m'.repeat(25)}${id}`)],
+    [
+      'too many ids',
+      Array.from(
+        { length: 21 },
+        (_, index) => `mat_${'m'.repeat(24)}${index.toString().padStart(2, '0')}`,
+      ),
+    ],
     ['an overlong id', [`mat_${'m'.repeat(64)}`]],
     ['an id with an embedded NUL', [`mat_${'m'.repeat(24)}\u00001`]],
     ['an id outside the material id alphabet', [`mat_${'m'.repeat(25)}u`]],
@@ -359,7 +365,7 @@ describe('POST /api/generate-classroom', () => {
     await expect(res.json()).resolves.toEqual({
       success: false,
       errorCode: 'INVALID_REQUEST',
-      error: 'materialIds must be an array of at most 5 material ids',
+      error: 'materialIds must be an array of at most 20 material ids',
     });
     // Malformed ids never reach the database.
     expect(mocks.getReadyOwnerMaterials).not.toHaveBeenCalled();
